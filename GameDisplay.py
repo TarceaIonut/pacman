@@ -191,10 +191,37 @@ class GameDisplay:
         return my_copy
 
     def check_positon_(self, poz: tuple[int, int]) -> bool:
+        if self.check_out_of_bounds_(poz):
+            return False
         if self.board[poz[1]][poz[0]] == GameUtils.CELL_WALL:
             return False
         return True
 
+    def check_out_of_bounds_(self, poz: tuple[int, int]) -> bool:
+        if poz[0] < 0 or poz[0] >= len(self.board[0]) or poz[1] < 0 or poz[1] >= len(self.board):
+            return True
+        return False
+
+    def check_new_position(self, poz: tuple[int, int], direction:tuple[int,int]) -> bool:
+
+        curr_cell:tuple[int,int] = poz[0] // self.cell_size, poz[1] // self.cell_size
+        if self.check_out_of_bounds_(curr_cell):
+            return False
+        if self.board[curr_cell[1]][curr_cell[0]] == GameUtils.CELL_WALL:
+            return False
+        if not self.check_positon_((curr_cell[0] + direction[0], curr_cell[1] + direction[1])):
+            match direction:
+                case GameUtils.DIRECTION_RIGHT:
+                    return poz[0] - curr_cell[0] * self.cell_size <= self.cell_size // 2
+                case GameUtils.DIRECTION_LEFT:
+                    return poz[0] - curr_cell[0] * self.cell_size >= self.cell_size // 2
+                case GameUtils.DIRECTION_UP:
+                    return poz[1] - curr_cell[1] * self.cell_size >= self.cell_size // 2
+                case GameUtils.DIRECTION_DOWN:
+                    return poz[1] - curr_cell[1] * self.cell_size <= self.cell_size // 2
+                case _:
+                    raise NotImplementedError
+        return True
 
     def get_possible_directions_for_actor_type(self, a_type:int) -> list[tuple[int,int]]:
         match a_type:
@@ -245,9 +272,49 @@ class GameDisplay:
             case _:
                 raise NotImplementedError
 
+    def move_a_type_default(self, a_type: int) -> bool:
+        match a_type:
+            case GameUtils.ACTOR_PACMAN:
+                return self.move_actor_(self.pacman, self.pacman.direction)
+            case GameUtils.ACTOR_RED:
+                return self.move_actor_(self.red, self.red.direction)
+            case GameUtils.ACTOR_BLUE:
+                return self.move_actor_(self.blue, self.blue.direction)
+            case GameUtils.ACTOR_PINK:
+                return self.move_actor_(self.pink, self.pink.direction)
+            case GameUtils.ACTOR_ORANGE:
+                return self.move_actor_(self.orange, self.orange.direction)
+            case _:
+                raise NotImplementedError
+
+
+    def change_direction_a_type(self, a_type: int, direction: tuple[int, int]) -> bool:
+        match a_type:
+            case GameUtils.ACTOR_PACMAN:
+                return self.change_direction_actor(self.pacman, direction)
+            case GameUtils.ACTOR_RED:
+                return self.change_direction_actor(self.red, direction)
+            case GameUtils.ACTOR_BLUE:
+                return self.change_direction_actor(self.blue, direction)
+            case GameUtils.ACTOR_PINK:
+                return self.change_direction_actor(self.pink, direction)
+            case GameUtils.ACTOR_ORANGE:
+                return self.change_direction_actor(self.orange, direction)
+            case _:
+                raise NotImplementedError
+    def change_direction_actor(self, a:Actor, direction: tuple[int, int]) -> bool:
+        new_poz = a.get_new_poz(direction)
+        if self.check_new_position(new_poz, direction):
+
+            a.direction = direction
+            return True
+        return False
+
     def move_actor_(self, a:Actor, direction: tuple[int, int]) -> bool:
         new_poz = a.get_new_poz(direction)
-        if self.check_positon_(a.get_cell_poz(new_poz)):
+        if direction == GameUtils.DIRECTION_UP:
+            print("muie")
+        if self.check_new_position(new_poz, direction):
             a.poz = new_poz
             a.direction = direction
             return True

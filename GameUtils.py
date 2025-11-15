@@ -20,7 +20,7 @@ PACMAN_LIVES:int = 3
 
 
 #FOR EXTERNAL USE
-DIRECTION_UP:tuple[int,int] = (1, -1)
+DIRECTION_UP:tuple[int,int] = (0, -1)
 DIRECTION_DOWN:tuple[int,int] = (0, 1)
 DIRECTION_LEFT:tuple[int,int] = (-1, 0)
 DIRECTION_RIGHT:tuple[int,int] = (1, 0)
