@@ -1,146 +1,102 @@
+
+
 import Maze
 import pygame
+import GameUtils
 
-CELL_FREE:int = 0
-CELL_WALL:int = 1
-CELL_SMALL_POINT:int = 2
-CELL_BIG_POINT:int = 3
-ACTOR_PACMAN:int = 0
-ACTOR_RED:int = 1
-ACTOR_BLUE:int = 2
-ACTOR_ORANGE:int = 3
-ACTOR_PINK:int = 4
 
-DIRECTION_UP:tuple[int,int] = (-1, 0)
-DIRECTION_DOWN:tuple[int,int] = (1, 0)
-DIRECTION_LEFT:tuple[int,int] = (0, -1)
-DIRECTION_RIGHT:tuple[int,int] = (0, 1)
+def scale_direction_(direction: tuple[int, int], scalar: int) -> tuple[int, int]:
+    return direction[0] * scalar, direction[1] * scalar
+def positon_add_direction_(poz: tuple[int, int], direction: tuple[int, int]) -> tuple[int, int]:
+    return poz[0] + direction[0], poz[1] + direction[1]
+
+
 
 def direction_to_number(direction:tuple[int,int]) -> int:
-    if DIRECTION_UP == direction:
+    if GameUtils.DIRECTION_UP == direction:
         return 0
-    if DIRECTION_LEFT == direction:
+    if GameUtils.DIRECTION_LEFT == direction:
         return 1
-    if DIRECTION_DOWN == direction:
+    if GameUtils.DIRECTION_DOWN == direction:
         return 2
-    if DIRECTION_RIGHT == direction:
+    if GameUtils.DIRECTION_RIGHT == direction:
         return 3
     raise NotImplementedError
 
-def image_black_trasparent(path: str, size: float) -> pygame.Surface:
+def image_black_transparent(path: str, size: float) -> pygame.Surface:
     image_full = pygame.transform.scale(pygame.image.load(path),(size, size)).convert_alpha()
     image_full.set_colorkey((0, 0, 0))
     return image_full
 
 class Actor:
-    def __init__(self, type:int, row_col:tuple[int,int], cell_size:int):
-        self.type = type
-        self.x = row_col[1] * cell_size
-        self.y = row_col[0] * cell_size
+    def __init__(self, type_:int, row_col:tuple[int,int], cell_size:int):
+        self.type = type_
+        self.poz:tuple[int,int] = (int((row_col[1] + 0.5) * cell_size), int((row_col[0] + 0.5) * cell_size))
         self.cell_size = cell_size
         self.image_size = cell_size * 1.5
-        self.direction = DIRECTION_UP
+        self.direction = GameUtils.DIRECTION_UP
         self.animation_cycle:int = 0
+        if type_ == GameUtils.ACTOR_PACMAN:
+            self.number_of_pixels_per_draw:int = self.cell_size // GameUtils.CYCLES_PER_CELL_PACMAN
+        else:
+            self.number_of_pixels_per_draw:int = self.cell_size // GameUtils.CYCLES_PER_CELL_GHOST
 
-        if type == ACTOR_PACMAN:
-            image_full = image_black_trasparent("pacman_full.png", self.image_size)
+        if type_ == GameUtils.ACTOR_PACMAN:
+            image_full = image_black_transparent("pacman_full.png", self.image_size)
             self.image = [
                 image_full,
-                image_black_trasparent("pacman_half_up.png", self.image_size),
-                image_black_trasparent("pacman_empty_up.png", self.image_size),
+                image_black_transparent("pacman_half_up.png", self.image_size),
+                image_black_transparent("pacman_empty_up.png", self.image_size),
                 image_full,
-                image_black_trasparent("pacman_half_left.png", self.image_size),
-                image_black_trasparent("pacman_empty_left.png", self.image_size),
+                image_black_transparent("pacman_half_left.png", self.image_size),
+                image_black_transparent("pacman_empty_left.png", self.image_size),
                 image_full,
-                image_black_trasparent("pacman_half_down.png", self.image_size),
-                image_black_trasparent("pacman_empty_down.png", self.image_size),
+                image_black_transparent("pacman_half_down.png", self.image_size),
+                image_black_transparent("pacman_empty_down.png", self.image_size),
                 image_full,
-                image_black_trasparent("pacman_half_right.png", self.image_size),
-                image_black_trasparent("pacman_empty_right.png", self.image_size),
+                image_black_transparent("pacman_half_right.png", self.image_size),
+                image_black_transparent("pacman_empty_right.png", self.image_size),
             ]
             self.nr_animations: int = 3
-        elif type == ACTOR_RED:
-            self.nr_animations: int = 2
+        elif type_ == GameUtils.ACTOR_RED:
+            self.nr_animations: int = 1
             self.image = []
-        elif type == ACTOR_BLUE:
-            self.nr_animations: int = 2
+        elif type_ == GameUtils.ACTOR_BLUE:
+            self.nr_animations: int = 1
             self.image = []
-        elif type == ACTOR_ORANGE:
-            self.nr_animations: int = 2
+        elif type_ == GameUtils.ACTOR_ORANGE:
+            self.nr_animations: int = 1
             self.image = []
-        elif type == ACTOR_PINK:
-            self.nr_animations: int = 2
+        elif type_ == GameUtils.ACTOR_PINK:
+            self.nr_animations: int = 1
             self.image = []
         else:
             raise NotImplementedError
 
     def draw(self, surface):
-        image_nr:int = direction_to_number(self.direction) + (self.animation_cycle // 33) % self.nr_animations
-        offset:float = (self.image_size - self.cell_size)
+        image_nr:int = direction_to_number(self.direction) + (self.animation_cycle // 50) % self.nr_animations
+        offset:float = (self.image_size / 2)
         #print(image_nr)
         if len(self.image) <= image_nr:
             print("not possible")
             return
-        surface.blit(self.image[image_nr], (self.x + offset, self.y))
+        draw_poz = self.normalize_coordinates_for_display()
+        surface.blit(self.image[image_nr], (draw_poz[0] - offset, draw_poz[1] - offset))
+
         self.animation_cycle += 1
 
+    def get_cell_poz(self, poz: tuple[int,int]) -> tuple[int,int]:
+        return poz[0] // self.cell_size, poz[1] // self.cell_size
+    def get_current_cell_poz(self):
+        return self.get_cell_poz(self.poz)
 
-    def _match_pacman_to_file(self) -> str:
-        animation = self.animation_cycle % 3
-        global DIRECTION_UP, DIRECTION_DOWN, DIRECTION_LEFT, DIRECTION_RIGHT
-        match self.direction, animation:
-            case (DIRECTION_UP, 0):
-                return "pacman_full_up"
-            case (DIRECTION_UP, 1):
-                return "pacman_half_up"
-            case (DIRECTION_UP, 2):
-                return "pacman_empty_up"
+    def normalize_coordinates_for_display(self) -> tuple[int,int]:
+        if self.direction == GameUtils.DIRECTION_UP or self.direction == GameUtils.DIRECTION_DOWN:
+            return int(((self.poz[0] // self.cell_size) + 0.5) * self.cell_size), self.poz[1]
+        return int(((self.poz[1] // self.cell_size) + 0.5) * self.cell_size), self.poz[0]
 
-            case (DIRECTION_DOWN, 0):
-                return "pacman_full_down"
-            case (DIRECTION_DOWN, 1):
-                return "pacman_half_down"
-            case (DIRECTION_DOWN, 2):
-                return "pacman_empty_down"
-
-            case (DIRECTION_LEFT, 0):
-                return "pacman_full_left"
-            case (DIRECTION_LEFT, 1):
-                return "pacman_half_left"
-            case (DIRECTION_LEFT, 2):
-                return "pacman_empty_left"
-
-            case (DIRECTION_RIGHT, 0):
-                return "pacman_full_right"
-            case (DIRECTION_RIGHT, 1):
-                return "pacman_half_right"
-            case (DIRECTION_RIGHT, 2):
-                return "pacman_empty_right"
-        raise NotImplementedError
-    def _match_red_to_file(self) -> str:
-        return "pacman_full.png"
-    def _match_blue_to_file(self) -> str:
-        return "pacman_full.png"
-    def _match_orange_to_file(self) -> str:
-        return "pacman_full.png"
-    def _match_pink_to_file(self) -> str:
-        return "pacman_full.png"
-
-    def match_type_to_file(self) -> str:
-        global ACTOR_PACMAN, ACTOR_RED, ACTOR_BLUE, ACTOR_ORANGE, ACTOR_PINK
-        if self.type == ACTOR_PACMAN:
-            return self._match_pacman_to_file()
-        elif self.type == ACTOR_RED:
-            return self._match_red_to_file()
-        elif self.type == ACTOR_BLUE:
-            self._match_blue_to_file()
-        elif self.type == ACTOR_ORANGE:
-            self._match_orange_to_file()
-        elif self.type == ACTOR_PINK:
-            self._match_pink_to_file()
-        else:
-            raise NotImplementedError
-
+    def get_new_poz(self, direction: tuple[int,int]):
+        return positon_add_direction_(self.poz, scale_direction_(direction, self.number_of_pixels_per_draw))
 
 
 def create_board(board: list[list[int]]) -> list[list[int]]:
@@ -149,40 +105,75 @@ def create_board(board: list[list[int]]) -> list[list[int]]:
     new_board:list[list[int]] = board.copy()
     for row in range(rows):
         for col in range(cols):
-            if board[row][col] == Maze.DEFAULT_FREE:
-                new_board[row][col] = CELL_FREE
+            if board[row][col] == Maze.DEFAULT_POINT:
+                new_board[row][col] = GameUtils.CELL_SMALL_POINT
             elif board[row][col] == Maze.DEFAULT_WALL:
-                new_board[row][col] = CELL_SMALL_POINT
+                new_board[row][col] = GameUtils.CELL_WALL
             elif board[row][col] == Maze.DEFAULT_NO_POINT:
-                new_board[row][col] = CELL_FREE
+                new_board[row][col] = GameUtils.CELL_FREE
             else:
                 print("error, unknown value ", board[row][col], " at row, col = " , row, ", ", cols)
                 raise NotImplementedError
     for (x,y) in Maze.DEFAULT_BIG_POINT:
-        new_board[x][y] = CELL_BIG_POINT
+        new_board[x][y] = GameUtils.CELL_BIG_POINT
 
     return new_board
 
 
+def get_actor_poz(a: Actor) -> tuple[int,int]:
+    return a.get_cell_poz(a.poz)
+
+
 class GameDisplay:
-    def __init__(self, width, height, maze:list[list[int]]):
-        self.width = width
-        self.height = height
+    def __init__(self, height, maze:list[list[int]]):
         self.board:list[list[int]] = create_board(maze)
-        self.cell_size = min(width // len(self.board[0]), height // len(self.board))
-        self.screen = pygame.display.set_mode((width, height))
+        self.cell_size = height // len(self.board)
+        self.width = self.cell_size * len(self.board[0])
+        self.height = self.cell_size * len(self.board)
 
-        self.pacman = Actor(ACTOR_PACMAN, Maze.DEFAULT_PACMAN ,self.cell_size)
-        self.red = Actor(ACTOR_RED, Maze.DEFAULT_RED ,self.cell_size)
-        self.blue = Actor(ACTOR_BLUE, Maze.DEFAULT_BLUE ,self.cell_size)
-        self.pink = Actor(ACTOR_PINK, Maze.DEFAULT_PINK ,self.cell_size)
-        self.orange = Actor(ACTOR_ORANGE, Maze.DEFAULT_ORANGE ,self.cell_size)
+        self.screen = pygame.display.set_mode((self.width, self.height))
 
-        self.background = pygame.transform.scale(pygame.image.load("Empty_board_default.png"), (width, height))
+        self.pacman = Actor(GameUtils.ACTOR_PACMAN, Maze.DEFAULT_PACMAN ,self.cell_size)
+        self.red = Actor(GameUtils.ACTOR_RED, Maze.DEFAULT_RED ,self.cell_size)
+        self.blue = Actor(GameUtils.ACTOR_BLUE, Maze.DEFAULT_BLUE ,self.cell_size)
+        self.pink = Actor(GameUtils.ACTOR_PINK, Maze.DEFAULT_PINK ,self.cell_size)
+        self.orange = Actor(GameUtils.ACTOR_ORANGE, Maze.DEFAULT_ORANGE ,self.cell_size)
 
+        self.background = pygame.transform.scale(pygame.image.load("Empty_board_default.png"), (self.width, self.height))
+
+        self.small_point_size:int = self.cell_size / GameUtils.SMALL_POINT_TO_CELL
+        self.big_point_size:int = self.cell_size / GameUtils.BIG_POINT_TO_CELL
+        self.cherry_size:int = self.cell_size / GameUtils.CHERRY_TO_CELL
+
+        self.small_point_image = pygame.transform.scale(pygame.image.load("small_point.png"), (self.small_point_size, self.small_point_size))
+        self.big_point_image = pygame.transform.scale(pygame.image.load("big_point.png"), (self.big_point_size, self.big_point_size))
+        self.cherry_image = pygame.transform.scale(pygame.image.load("cherry.png"), (self.cherry_size, self.cherry_size))
+
+        self.game_score:int = 0
+        self.powered_up_mode:bool = False
+        self.time_until_powered_up_stops:int = 0
 
         pygame.init()
         pygame.display.set_caption("Pacman")
+
+    def see_what_happens_in_a_move(self):
+        cell_poz = self.pacman.get_current_cell_poz()
+        self.gameplay_points(cell_poz)
+        if self.time_until_powered_up_stops == 0:
+            self.powered_up_mode = False
+        
+
+
+    def gameplay_points(self, cell_poz:tuple[int,int]):
+        current_cell = self.board[cell_poz[1]][cell_poz[0]]
+        if current_cell == GameUtils.CELL_SMALL_POINT:
+            self.game_score += GameUtils.POINTS_SMALL_POINT
+        elif current_cell == GameUtils.CELL_BIG_POINT:
+            self.game_score += GameUtils.POINTS_BIG_POINT
+            self.powered_up_mode = True
+            self.time_until_powered_up_stops += GameUtils.POWERED_UP_TIME
+
+
 
     def draw(self):
         self.screen.blit(self.background, (0, 0))
@@ -191,31 +182,124 @@ class GameDisplay:
         #self.blue.draw(self.screen)
         #self.pink.draw(self.screen)
         #self.orange.draw(self.screen)
+
+        self.draw_board()
         pygame.display.update()
 
     def draw_board(self):
         for row in range(len(self.board)):
             for col in range(len(self.board[row])):
+                draw_poz:tuple[int,int] = positon_add_direction_(scale_direction_((col, row), self.cell_size),
+                                                                 (self.cell_size // 2, self.cell_size // 2))
                 cell = self.board[row][col]
-                if cell == CELL_FREE:
-                    color = (0, 0, 255)
-                elif cell == CELL_WALL:
-                    color = (0, 0, 0)
-                elif cell == CELL_SMALL_POINT:
-                    color = (255, 255, 255)
-                elif cell == CELL_BIG_POINT:
-                    color = (128, 128, 128)
-                else:
-                    color = (255, 0, 0)
-                pygame.draw.rect(
-                    self.screen,
-                    color,
-                    (col * self.cell_size, row * self.cell_size, self.cell_size, self.cell_size)
-                )
+                if cell == GameUtils.CELL_SMALL_POINT or cell == GameUtils.CELL_BIG_POINT:
+                    self.draw_object(draw_poz, cell)
 
         pygame.display.flip()
 
-game = GameDisplay(1000, 1000, Maze.DEFAULT_MAZE)
+    def draw_object(self, screen_poz:tuple[int,int], object_id:int) -> None:
+        match object_id:
+            case GameUtils.CELL_FREE | GameUtils.CELL_WALL:
+                return None
+            case GameUtils.CELL_SMALL_POINT:
+                offset = self.small_point_size // 2
+                self.screen.blit(self.small_point_image, (screen_poz[0] - offset, screen_poz[1] - offset))
+            case GameUtils.CELL_BIG_POINT:
+                offset = self.big_point_size // 2
+                self.screen.blit(self.big_point_image, (screen_poz[0] - offset, screen_poz[1] - offset))
+            case GameUtils.CHERRY_ID:
+                offset = self.cherry_size // 2
+                self.screen.blit(self.cherry_image, (screen_poz[0] - offset, screen_poz[1] - offset))
+            case _:
+                raise NotImplementedError
+        return None
+
+
+    def get_poz_actor_type(self, a_type: int) -> tuple[int,int]:
+        match a_type:
+            case GameUtils.ACTOR_PACMAN:
+                return get_actor_poz(self.pacman)
+            case GameUtils.ACTOR_RED:
+                return get_actor_poz(self.red)
+            case GameUtils.ACTOR_BLUE:
+                return get_actor_poz(self.blue)
+            case GameUtils.ACTOR_PINK:
+                return get_actor_poz(self.pink)
+            case GameUtils.ACTOR_ORANGE:
+                return get_actor_poz(self.orange)
+            case _:
+                raise NotImplementedError
+
+    def get_board_copy(self) -> list[list[int]]:
+        my_copy:list[list[int]] = []
+        for row in self.board:
+            my_copy.append(row.copy())
+        return my_copy
+
+    def check_positon_(self, poz: tuple[int, int]) -> bool:
+        if self.board[poz[1]][poz[0]] == GameUtils.CELL_WALL:
+            return False
+        return True
+
+
+    def get_possible_directions_for_actor_type(self, a_type:int) -> list[tuple[int,int]]:
+        match a_type:
+            case GameUtils.ACTOR_PACMAN:
+                return self.get_possible_directions_of_an_actor_(self.pacman)
+            case GameUtils.ACTOR_RED:
+                return self.get_possible_directions_of_an_actor_(self.red)
+            case GameUtils.ACTOR_BLUE:
+                return self.get_possible_directions_of_an_actor_(self.blue)
+            case GameUtils.ACTOR_PINK:
+                return self.get_possible_directions_of_an_actor_(self.pink)
+            case GameUtils.ACTOR_ORANGE:
+                return self.get_possible_directions_of_an_actor_(self.orange)
+            case _:
+                raise NotImplementedError
+
+    def get_possible_directions_of_an_actor_(self, a: Actor) -> list[tuple[int, int]]:
+        direction_up_cell:tuple[int,int] = a.get_cell_poz(a.get_new_poz(GameUtils.DIRECTION_UP))
+        direction_left_cell: tuple[int, int] = a.get_cell_poz(a.get_new_poz(GameUtils.DIRECTION_LEFT))
+        direction_down_cell: tuple[int, int] = a.get_cell_poz(a.get_new_poz(GameUtils.DIRECTION_DOWN))
+        direction_right_cell: tuple[int, int] = a.get_cell_poz(a.get_new_poz(GameUtils.DIRECTION_RIGHT))
+
+        list_good_directions:list[tuple[int, int]] = []
+
+        if self.check_positon_(direction_up_cell):
+            list_good_directions.append(direction_up_cell)
+        if self.check_positon_(direction_left_cell):
+            list_good_directions.append(direction_left_cell)
+        if self.check_positon_(direction_down_cell):
+            list_good_directions.append(direction_down_cell)
+        if self.check_positon_(direction_right_cell):
+            list_good_directions.append(direction_right_cell)
+
+        return list_good_directions
+
+    def move_a_type(self, a_type: int, direction: tuple[int, int]) -> bool:
+        match a_type:
+            case GameUtils.ACTOR_PACMAN:
+                return self.move_actor_(self.pacman, direction)
+            case GameUtils.ACTOR_RED:
+                return self.move_actor_(self.red, direction)
+            case GameUtils.ACTOR_BLUE:
+                return self.move_actor_(self.blue, direction)
+            case GameUtils.ACTOR_PINK:
+                return self.move_actor_(self.pink, direction)
+            case GameUtils.ACTOR_ORANGE:
+                return self.move_actor_(self.orange, direction)
+            case _:
+                raise NotImplementedError
+
+    def move_actor_(self, a:Actor, direction: tuple[int, int]) -> bool:
+        new_poz = a.get_new_poz(direction)
+        if self.check_positon_(a.get_cell_poz(new_poz)):
+            a.poz = new_poz
+            a.direction = direction
+            return True
+        return False
+
+game = GameDisplay(1000, Maze.DEFAULT_MAZE)
 while True:
     game.draw()
 
