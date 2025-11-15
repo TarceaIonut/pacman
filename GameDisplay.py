@@ -1,132 +1,14 @@
-
-
 import Maze
 import pygame
 import GameUtils
-
-
-def scale_direction_(direction: tuple[int, int], scalar: int) -> tuple[int, int]:
-    return direction[0] * scalar, direction[1] * scalar
-def positon_add_direction_(poz: tuple[int, int], direction: tuple[int, int]) -> tuple[int, int]:
-    return poz[0] + direction[0], poz[1] + direction[1]
-
-
-
-def direction_to_number(direction:tuple[int,int]) -> int:
-    if GameUtils.DIRECTION_UP == direction:
-        return 0
-    if GameUtils.DIRECTION_LEFT == direction:
-        return 1
-    if GameUtils.DIRECTION_DOWN == direction:
-        return 2
-    if GameUtils.DIRECTION_RIGHT == direction:
-        return 3
-    raise NotImplementedError
-
-def image_black_transparent(path: str, size: float) -> pygame.Surface:
-    image_full = pygame.transform.scale(pygame.image.load(path),(size, size)).convert_alpha()
-    image_full.set_colorkey((0, 0, 0))
-    return image_full
-
-class Actor:
-    def __init__(self, type_:int, row_col:tuple[int,int], cell_size:int):
-        self.type = type_
-        self.poz:tuple[int,int] = (int((row_col[1] + 0.5) * cell_size), int((row_col[0] + 0.5) * cell_size))
-        self.cell_size = cell_size
-        self.image_size = cell_size * 1.5
-        self.direction = GameUtils.DIRECTION_UP
-        self.animation_cycle:int = 0
-        if type_ == GameUtils.ACTOR_PACMAN:
-            self.number_of_pixels_per_draw:int = self.cell_size // GameUtils.CYCLES_PER_CELL_PACMAN
-        else:
-            self.number_of_pixels_per_draw:int = self.cell_size // GameUtils.CYCLES_PER_CELL_GHOST
-
-        if type_ == GameUtils.ACTOR_PACMAN:
-            image_full = image_black_transparent("pacman_full.png", self.image_size)
-            self.image = [
-                image_full,
-                image_black_transparent("pacman_half_up.png", self.image_size),
-                image_black_transparent("pacman_empty_up.png", self.image_size),
-                image_full,
-                image_black_transparent("pacman_half_left.png", self.image_size),
-                image_black_transparent("pacman_empty_left.png", self.image_size),
-                image_full,
-                image_black_transparent("pacman_half_down.png", self.image_size),
-                image_black_transparent("pacman_empty_down.png", self.image_size),
-                image_full,
-                image_black_transparent("pacman_half_right.png", self.image_size),
-                image_black_transparent("pacman_empty_right.png", self.image_size),
-            ]
-            self.nr_animations: int = 3
-        elif type_ == GameUtils.ACTOR_RED:
-            self.nr_animations: int = 1
-            self.image = []
-        elif type_ == GameUtils.ACTOR_BLUE:
-            self.nr_animations: int = 1
-            self.image = []
-        elif type_ == GameUtils.ACTOR_ORANGE:
-            self.nr_animations: int = 1
-            self.image = []
-        elif type_ == GameUtils.ACTOR_PINK:
-            self.nr_animations: int = 1
-            self.image = []
-        else:
-            raise NotImplementedError
-
-    def draw(self, surface):
-        image_nr:int = direction_to_number(self.direction) + (self.animation_cycle // 50) % self.nr_animations
-        offset:float = (self.image_size / 2)
-        #print(image_nr)
-        if len(self.image) <= image_nr:
-            print("not possible")
-            return
-        draw_poz = self.normalize_coordinates_for_display()
-        surface.blit(self.image[image_nr], (draw_poz[0] - offset, draw_poz[1] - offset))
-
-        self.animation_cycle += 1
-
-    def get_cell_poz(self, poz: tuple[int,int]) -> tuple[int,int]:
-        return poz[0] // self.cell_size, poz[1] // self.cell_size
-    def get_current_cell_poz(self):
-        return self.get_cell_poz(self.poz)
-
-    def normalize_coordinates_for_display(self) -> tuple[int,int]:
-        if self.direction == GameUtils.DIRECTION_UP or self.direction == GameUtils.DIRECTION_DOWN:
-            return int(((self.poz[0] // self.cell_size) + 0.5) * self.cell_size), self.poz[1]
-        return int(((self.poz[1] // self.cell_size) + 0.5) * self.cell_size), self.poz[0]
-
-    def get_new_poz(self, direction: tuple[int,int]):
-        return positon_add_direction_(self.poz, scale_direction_(direction, self.number_of_pixels_per_draw))
-
-
-def create_board(board: list[list[int]]) -> list[list[int]]:
-    rows = len(board)
-    cols = len(board[0])
-    new_board:list[list[int]] = board.copy()
-    for row in range(rows):
-        for col in range(cols):
-            if board[row][col] == Maze.DEFAULT_POINT:
-                new_board[row][col] = GameUtils.CELL_SMALL_POINT
-            elif board[row][col] == Maze.DEFAULT_WALL:
-                new_board[row][col] = GameUtils.CELL_WALL
-            elif board[row][col] == Maze.DEFAULT_NO_POINT:
-                new_board[row][col] = GameUtils.CELL_FREE
-            else:
-                print("error, unknown value ", board[row][col], " at row, col = " , row, ", ", cols)
-                raise NotImplementedError
-    for (x,y) in Maze.DEFAULT_BIG_POINT:
-        new_board[x][y] = GameUtils.CELL_BIG_POINT
-
-    return new_board
-
-
-def get_actor_poz(a: Actor) -> tuple[int,int]:
-    return a.get_cell_poz(a.poz)
-
+from Actor import Actor, get_actor_poz
+from GameState import GameState
+from HelperFunctions import create_board, positon_add_direction_, scale_direction_
+import time
 
 class GameDisplay:
-    def __init__(self, height, maze:list[list[int]]):
-        self.board:list[list[int]] = create_board(maze)
+    def __init__(self, height):
+        self.board:list[list[int]] = create_board(Maze.DEFAULT_MAZE)
         self.cell_size = height // len(self.board)
         self.width = self.cell_size * len(self.board[0])
         self.height = self.cell_size * len(self.board)
@@ -149,29 +31,99 @@ class GameDisplay:
         self.big_point_image = pygame.transform.scale(pygame.image.load("big_point.png"), (self.big_point_size, self.big_point_size))
         self.cherry_image = pygame.transform.scale(pygame.image.load("cherry.png"), (self.cherry_size, self.cherry_size))
 
-        self.game_score:int = 0
-        self.powered_up_mode:bool = False
-        self.time_until_powered_up_stops:int = 0
+        self.game_state = GameState()
 
         pygame.init()
         pygame.display.set_caption("Pacman")
 
     def see_what_happens_in_a_move(self):
-        cell_poz = self.pacman.get_current_cell_poz()
-        self.gameplay_points(cell_poz)
-        if self.time_until_powered_up_stops == 0:
-            self.powered_up_mode = False
-        
+
+        if self.game_state.game_temp_pause:
+            self.gameplay_paused()
+        else:
+            cell_poz_pacman = self.pacman.get_current_cell_poz()
+            cell_poz_pink = self.pink.get_current_cell_poz()
+            cell_poz_red = self.red.get_current_cell_poz()
+            cell_poz_blue = self.blue.get_current_cell_poz()
+            cell_poz_orange = self.orange.get_current_cell_poz()
+
+            self.gameplay_points(cell_poz_pacman)
+            if self.game_state.time_until_powered_up_stops == 0:
+                self.game_state.powered_up_mode = False
+
+            self.gameplay_phantom(cell_poz_pacman, cell_poz_pink, cell_poz_red, cell_poz_blue, cell_poz_orange)
+
+    def gameplay_paused(self):
+        if self.game_state.game_over:
+            return
+        if self.game_state.pacman_eaten:
+            self.game_state.pacman_eaten_time -= 1
+            if self.game_state.pacman_eaten_time == 0:
+                self.reset_positions_game()
+            self.game_state.pacman_eaten = False
+        if self.game_state.wait_until_new_level:
+            self.game_state.new_level_time -= 1
+            if self.game_state.new_level_time == 0:
+                self.reset_for_new_level()
+            self.game_state.wait_until_new_level = False
+
+    def reset_positions_game(self):
+        self.pacman.reset_positions(Maze.DEFAULT_PACMAN)
+        self.red.reset_positions(Maze.DEFAULT_RED)
+        self.blue.reset_positions(Maze.DEFAULT_BLUE)
+        self.orange.reset_positions(Maze.DEFAULT_ORANGE)
+        self.pink.reset_positions(Maze.DEFAULT_PINK)
+
+    def reset_for_new_level(self):
+        self.board: list[list[int]] = create_board(Maze.DEFAULT_MAZE)
+        self.pacman.reset_positions(Maze.DEFAULT_PACMAN)
+        self.red.reset_positions(Maze.DEFAULT_RED)
+        self.blue.reset_positions(Maze.DEFAULT_BLUE)
+        self.orange.reset_positions(Maze.DEFAULT_ORANGE)
+        self.pink.reset_positions(Maze.DEFAULT_PINK)
+        self.game_state.reset_for_new_level()
+
+    def gameplay_phantom(self, cell_poz_pacman, cell_poz_pink, cell_poz_red, cell_poz_blue, cell_poz_orange):
+
+        if cell_poz_pacman == cell_poz_red and self.red.eaten_state == False:
+            self.ghost_pacman_meat(self.red)
+        if cell_poz_pacman == cell_poz_blue and self.blue.eaten_state == False:
+            self.ghost_pacman_meat(self.blue)
+        if cell_poz_pacman == cell_poz_orange and self.orange.eaten_state == False:
+            self.ghost_pacman_meat(self.orange)
+        if cell_poz_pacman == cell_poz_pink and self.pink.eaten_state == False:
+            self.ghost_pacman_meat(self.pink)
 
 
-    def gameplay_points(self, cell_poz:tuple[int,int]):
-        current_cell = self.board[cell_poz[1]][cell_poz[0]]
+    def ghost_pacman_meat(self, a: Actor):
+        if not a.eaten_state:
+            pass
+        else:
+            if self.game_state.powered_up_mode:
+                a.eaten_state = True
+            else:
+                self.pacman_eat()
+
+    def pacman_eat(self):
+        self.game_state.lives -= 1
+        if self.game_state.lives == 0:
+            self.game_state.game_over = True
+
+        self.game_state.pacman_eaten_time = GameUtils.PACMAN_DEAD_TIME
+        self.game_state.game_temp_pause = True
+
+
+
+    def gameplay_points(self, cell_poz_pacman:tuple[int,int]):
+        current_cell = self.board[cell_poz_pacman[1]][cell_poz_pacman[0]]
         if current_cell == GameUtils.CELL_SMALL_POINT:
-            self.game_score += GameUtils.POINTS_SMALL_POINT
+            self.game_state.game_score += GameUtils.POINTS_SMALL_POINT
+            self.board[cell_poz_pacman[1]][cell_poz_pacman[0]] = GameUtils.CELL_FREE
         elif current_cell == GameUtils.CELL_BIG_POINT:
-            self.game_score += GameUtils.POINTS_BIG_POINT
-            self.powered_up_mode = True
-            self.time_until_powered_up_stops += GameUtils.POWERED_UP_TIME
+            self.game_state.game_score += GameUtils.POINTS_BIG_POINT
+            self.game_state.powered_up_mode = True
+            self.game_state.time_until_powered_up_stops += GameUtils.POWERED_UP_TIME
+            self.board[cell_poz_pacman[1]][cell_poz_pacman[0]] = GameUtils.CELL_FREE
 
 
 
@@ -182,6 +134,8 @@ class GameDisplay:
         #self.blue.draw(self.screen)
         #self.pink.draw(self.screen)
         #self.orange.draw(self.screen)
+
+        self.see_what_happens_in_a_move()
 
         self.draw_board()
         pygame.display.update()
@@ -299,7 +253,10 @@ class GameDisplay:
             return True
         return False
 
-game = GameDisplay(1000, Maze.DEFAULT_MAZE)
-while True:
-    game.draw()
+    def game_paused(self):
+        return self.game_state.game_temp_pause
+    def game_over(self):
+        return self.game_state.game_over
+
+
 
