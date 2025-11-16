@@ -16,5 +16,7 @@ class GameState:
 
         self.new_level_time: int = 0
 
+        self.nr_points: int = 0
+
     def reset_for_new_level(self):
         self.powered_up_mode = False

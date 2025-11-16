@@ -13,7 +13,7 @@ class GameDisplay:
         self.width = self.cell_size * len(self.board[0])
         self.height = self.cell_size * len(self.board)
 
-        self.screen = pygame.display.set_mode((self.width, self.height))
+        self.screen = pygame.display.set_mode((self.width * 2, self.height))
 
         self.pacman = Actor(GameUtils.ACTOR_PACMAN, Maze.DEFAULT_PACMAN ,self.cell_size)
         self.red = Actor(GameUtils.ACTOR_RED, Maze.DEFAULT_RED ,self.cell_size)
@@ -32,9 +32,17 @@ class GameDisplay:
         self.cherry_image = pygame.transform.scale(pygame.image.load("cherry.png"), (self.cherry_size, self.cherry_size))
 
         self.game_state = GameState()
+        self.game_state.nr_points = self.get_nr_points()
 
-        pygame.init()
-        pygame.display.set_caption("Pacman")
+    def get_nr_points(self) -> int:
+        nr = 0
+        rows = len(self.board)
+        cols = len(self.board[0])
+        for row in range(rows):
+            for col in range(cols):
+                if self.board[row][col] == GameUtils.CELL_SMALL_POINT or self.board[row][col] == GameUtils.CELL_BIG_POINT:
+                    nr += 1
+        return nr
 
     def see_what_happens_in_a_move(self):
 
@@ -138,7 +146,7 @@ class GameDisplay:
         self.see_what_happens_in_a_move()
 
         self.draw_board()
-        pygame.display.update()
+
 
     def draw_board(self):
         for row in range(len(self.board)):
@@ -312,8 +320,6 @@ class GameDisplay:
 
     def move_actor_(self, a:Actor, direction: tuple[int, int]) -> bool:
         new_poz = a.get_new_poz(direction)
-        if direction == GameUtils.DIRECTION_UP:
-            print("muie")
         if self.check_new_position(new_poz, direction):
             a.poz = new_poz
             a.direction = direction

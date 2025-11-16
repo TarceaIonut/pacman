@@ -28,10 +28,6 @@ def image_black_transparent(path: str, size: float) -> pygame.Surface:
     return image_full
 
 
-
-
-
-
 def create_board(board: list[list[int]]) -> list[list[int]]:
     rows = len(board)
     cols = len(board[0])
