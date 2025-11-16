@@ -102,11 +102,11 @@ class GUI:
             if self.game.board[p[1]][p[0]] == GameUtils.CELL_WALL:
                 print("W")
             self.handle_events()
-            self.game.change_direction_a_type(GameUtils.ACTOR_PACMAN, self.gui_utils.direction)
-            self.game.move_a_type_default(GameUtils.ACTOR_PACMAN)
+
+            if not self.game.game_state.game_temp_pause:
+                self.game.change_direction_a_type(GameUtils.ACTOR_PACMAN, self.gui_utils.direction)
+                self.game.move_a_type_default(GameUtils.ACTOR_PACMAN)
             self.game.draw()
-
-
 
 
     def handle_events(self):

@@ -31,7 +31,9 @@ def image_black_transparent(path: str, size: float) -> pygame.Surface:
 def create_board(board: list[list[int]]) -> list[list[int]]:
     rows = len(board)
     cols = len(board[0])
-    new_board:list[list[int]] = board.copy()
+    new_board:list[list[int]] = []
+    for row in board:
+        new_board.append([x for x in row])
     for row in range(rows):
         for col in range(cols):
             if board[row][col] == Maze.DEFAULT_POINT:

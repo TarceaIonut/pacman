@@ -1,3 +1,5 @@
+import pygame
+
 import GameUtils
 import Maze
 from HelperFunctions import image_black_transparent, direction_to_number, positon_add_direction_, scale_direction_
@@ -21,6 +23,10 @@ class Actor:
         else:
             self.number_of_pixels_per_draw:int = self.cell_size // GameUtils.CYCLES_PER_CELL_GHOST
 
+        self.image_scared_ghost = image_black_transparent("ghost_scared.png", self.image_size)
+        self.image_eyes = pygame.transform.scale(pygame.image.load("eyes.png"),(self.image_size, self.image_size // 2)).convert_alpha()
+        self.image_eyes.set_colorkey((70, 70, 70))
+
         if type_ == GameUtils.ACTOR_PACMAN:
             image_full = image_black_transparent("pacman_full.png", self.image_size)
             self.image = [
@@ -40,16 +46,20 @@ class Actor:
             self.nr_animations: int = 3
         elif type_ == GameUtils.ACTOR_RED:
             self.nr_animations: int = 1
-            self.image = []
+            image = image_black_transparent("red_left.png", self.image_size)
+            self.image = [image,image,image,image]
         elif type_ == GameUtils.ACTOR_BLUE:
             self.nr_animations: int = 1
-            self.image = []
+            image = image_black_transparent("blue.png", self.image_size)
+            self.image = [image, image, image, image]
         elif type_ == GameUtils.ACTOR_ORANGE:
             self.nr_animations: int = 1
-            self.image = []
+            image = image_black_transparent("orange.png", self.image_size)
+            self.image = [image, image, image, image]
         elif type_ == GameUtils.ACTOR_PINK:
             self.nr_animations: int = 1
-            self.image = []
+            image = image_black_transparent("pink.png", self.image_size)
+            self.image = [image, image, image, image]
         else:
             raise NotImplementedError
 
@@ -68,7 +78,13 @@ class Actor:
             print("not possible")
             raise NotImplementedError
         draw_poz = self.normalize_coordinates_for_display()
-        surface.blit(self.image[image_nr], (draw_poz[0] - offset, draw_poz[1] - offset))
+
+        if self.eaten_state:
+            surface.blit(self.image_eyes, (draw_poz[0] - offset // 2, draw_poz[1] - offset // 2))
+        elif self.scared_state:
+            surface.blit(self.image_scared_ghost, (draw_poz[0] - offset, draw_poz[1] - offset))
+        else:
+            surface.blit(self.image[image_nr], (draw_poz[0] - offset, draw_poz[1] - offset))
 
         self.animation_cycle += 1
 

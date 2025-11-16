@@ -4,7 +4,6 @@ import GameUtils
 from Actor import Actor, get_actor_poz
 from GameState import GameState
 from HelperFunctions import create_board, positon_add_direction_, scale_direction_
-import time
 
 class GameDisplay:
     def __init__(self, height):
@@ -31,8 +30,8 @@ class GameDisplay:
         self.big_point_image = pygame.transform.scale(pygame.image.load("big_point.png"), (self.big_point_size, self.big_point_size))
         self.cherry_image = pygame.transform.scale(pygame.image.load("cherry.png"), (self.cherry_size, self.cherry_size))
 
-        self.game_state = GameState()
-        self.game_state.nr_points = self.get_nr_points()
+        self.game_state = GameState(self.get_nr_points())
+
 
     def get_nr_points(self) -> int:
         nr = 0
@@ -55,11 +54,40 @@ class GameDisplay:
             cell_poz_blue = self.blue.get_current_cell_poz()
             cell_poz_orange = self.orange.get_current_cell_poz()
 
-            self.gameplay_points(cell_poz_pacman)
-            if self.game_state.time_until_powered_up_stops == 0:
-                self.game_state.powered_up_mode = False
+            self.gameplay_win()
 
-            self.gameplay_phantom(cell_poz_pacman, cell_poz_pink, cell_poz_red, cell_poz_blue, cell_poz_orange)
+            if self.game_state.game_temp_pause:
+                self.gameplay_paused()
+            else:
+                self.gameplay_scared()
+                self.gameplay_points(cell_poz_pacman)
+                self.gameplay_phantom(cell_poz_pacman, cell_poz_pink, cell_poz_red, cell_poz_blue, cell_poz_orange)
+
+    def gameplay_win(self):
+        if self.game_state.nr_points_remaining == 0:
+            if not self.game_state.wait_until_new_level:
+                self.game_state.wait_until_new_level = True
+                self.game_state.new_level_time = GameUtils.NEW_LEVEL_TIME
+            self.game_state.game_temp_pause = True
+
+    def gameplay_scared(self):
+        if self.game_state.time_until_powered_up_stops == 0:
+            self.game_state.powered_up_mode = False
+            self.red.scared_state = False
+            self.blue.scared_state = False
+            self.orange.scared_state = False
+            self.pink.scared_state = False
+        else:
+            self.game_state.time_until_powered_up_stops -= 1
+
+        if self.red.get_current_cell_poz() == Maze.DEFAULT_RED:
+            self.red.eaten_state = False
+        if self.blue.get_current_cell_poz() == Maze.DEFAULT_BLUE:
+            self.blue.eaten_state = False
+        if self.orange.get_current_cell_poz() == Maze.DEFAULT_ORANGE:
+            self.orange.eaten_state = False
+        if self.pink.get_current_cell_poz() == Maze.DEFAULT_PINK:
+            self.pink.eaten_state = False
 
     def gameplay_paused(self):
         if self.game_state.game_over:
@@ -68,12 +96,15 @@ class GameDisplay:
             self.game_state.pacman_eaten_time -= 1
             if self.game_state.pacman_eaten_time == 0:
                 self.reset_positions_game()
-            self.game_state.pacman_eaten = False
+                self.game_state.pacman_eaten = False
+                self.game_state.game_temp_pause = False
         if self.game_state.wait_until_new_level:
             self.game_state.new_level_time -= 1
             if self.game_state.new_level_time == 0:
                 self.reset_for_new_level()
-            self.game_state.wait_until_new_level = False
+                self.game_state.wait_until_new_level = False
+                self.game_state.game_temp_pause = False
+
 
     def reset_positions_game(self):
         self.pacman.reset_positions(Maze.DEFAULT_PACMAN)
@@ -104,7 +135,8 @@ class GameDisplay:
 
 
     def ghost_pacman_meat(self, a: Actor):
-        if not a.eaten_state:
+        print("ghost_pacman_meat")
+        if a.eaten_state:
             pass
         else:
             if self.game_state.powered_up_mode:
@@ -113,6 +145,7 @@ class GameDisplay:
                 self.pacman_eat()
 
     def pacman_eat(self):
+        self.game_state.pacman_eaten = True
         self.game_state.lives -= 1
         if self.game_state.lives == 0:
             self.game_state.game_over = True
@@ -127,21 +160,27 @@ class GameDisplay:
         if current_cell == GameUtils.CELL_SMALL_POINT:
             self.game_state.game_score += GameUtils.POINTS_SMALL_POINT
             self.board[cell_poz_pacman[1]][cell_poz_pacman[0]] = GameUtils.CELL_FREE
+            self.game_state.nr_points_remaining -= 1
         elif current_cell == GameUtils.CELL_BIG_POINT:
             self.game_state.game_score += GameUtils.POINTS_BIG_POINT
             self.game_state.powered_up_mode = True
+            self.red.scared_state = True
+            self.blue.scared_state = True
+            self.orange.scared_state = True
+            self.pink.scared_state = True
             self.game_state.time_until_powered_up_stops += GameUtils.POWERED_UP_TIME
             self.board[cell_poz_pacman[1]][cell_poz_pacman[0]] = GameUtils.CELL_FREE
+            self.game_state.nr_points_remaining -= 1
 
 
 
     def draw(self):
         self.screen.blit(self.background, (0, 0))
         self.pacman.draw(self.screen)
-        #self.red.draw(self.screen)
-        #self.blue.draw(self.screen)
-        #self.pink.draw(self.screen)
-        #self.orange.draw(self.screen)
+        self.red.draw(self.screen)
+        self.blue.draw(self.screen)
+        self.pink.draw(self.screen)
+        self.orange.draw(self.screen)
 
         self.see_what_happens_in_a_move()
 
