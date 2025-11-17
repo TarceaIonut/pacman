@@ -54,6 +54,8 @@ class GameDisplay:
             cell_poz_blue = self.blue.get_current_cell_poz()
             cell_poz_orange = self.orange.get_current_cell_poz()
 
+            self.gameplay_teleport()
+
             self.gameplay_win()
 
             if self.game_state.game_temp_pause:
@@ -62,6 +64,19 @@ class GameDisplay:
                 self.gameplay_scared()
                 self.gameplay_points(cell_poz_pacman)
                 self.gameplay_phantom(cell_poz_pacman, cell_poz_pink, cell_poz_red, cell_poz_blue, cell_poz_orange)
+
+
+    def gameplay_teleport(self):
+        cell_poz_pacman = self.pacman.get_current_cell_poz()
+        swap_p_1 = Maze.DEFAULT_TELEPORTS[0][1], Maze.DEFAULT_TELEPORTS[0][0]
+        swap_p_2 = Maze.DEFAULT_TELEPORTS[1][1], Maze.DEFAULT_TELEPORTS[1][0]
+        print(cell_poz_pacman)
+        if cell_poz_pacman == swap_p_1:
+            new_poz_pacman:tuple[int,int] = positon_add_direction_(scale_direction_(swap_p_2, self.cell_size), (-self.cell_size // 2, self.cell_size // 2))
+            self.pacman.poz = new_poz_pacman
+        elif cell_poz_pacman == swap_p_2:
+            new_poz_pacman: tuple[int, int] = positon_add_direction_(scale_direction_(swap_p_1, self.cell_size), (self.cell_size, self.cell_size // 2))
+            self.pacman.poz = new_poz_pacman
 
     def gameplay_win(self):
         if self.game_state.nr_points_remaining == 0:
@@ -175,14 +190,13 @@ class GameDisplay:
 
 
     def draw(self):
+        self.see_what_happens_in_a_move()
         self.screen.blit(self.background, (0, 0))
         self.pacman.draw(self.screen)
         self.red.draw(self.screen)
         self.blue.draw(self.screen)
         self.pink.draw(self.screen)
         self.orange.draw(self.screen)
-
-        self.see_what_happens_in_a_move()
 
         self.draw_board()
 

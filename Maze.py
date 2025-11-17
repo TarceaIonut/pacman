@@ -44,3 +44,5 @@ DEFAULT_ORANGE:tuple[int,int] = (14, 15)
 DEFAULT_BIG_POINT:list[tuple[int,int]] = [(3, 1), (3, 26), (23, 1), (23, 26)]
 
 DEFAULT_GHOST_RECHARGE_REC:tuple[tuple[int,int], tuple[int,int]] = ((13, 10), (17, 13))
+
+DEFAULT_TELEPORTS: tuple[tuple[int,int], tuple[int,int]] = ((14,0),(14,27))

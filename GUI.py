@@ -33,7 +33,7 @@ class GUI:
 
     def draw_text(self, poz:tuple[int,int], text:str):
         font = pygame.font.SysFont("Arial", GUI_utils.DEFAULT_SIZE // 3)
-        text_surface = font.render(text, True, GUI_utils.COLOR_DEFAULT_TEXT)
+        text_surface = font.render(text, True, GUI_utils.COLOR_DEFAULT_TEXT2)
         self.game.screen.blit(text_surface, poz)
 
     def clear_area(self, rect):

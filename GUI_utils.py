@@ -14,8 +14,9 @@ ALGORITHM_PACMAN_REFLEX_AGENT:int = 0
 ALGORITHM_PACMAN_MIN_MAX:int = 1
 ALGORITHM_PACMAN_AB_PRUNING:int = 2
 
-COLOR_DEFAULT_BUTTON:tuple[int,int,int] = (255,0,0)
-COLOR_DEFAULT_TEXT:tuple[int,int,int] = (0,0,255)
+COLOR_DEFAULT_BUTTON:tuple[int,int,int] = (128,214,238)
+COLOR_DEFAULT_TEXT:tuple[int,int,int] = (0,68,119)
+COLOR_DEFAULT_TEXT2:tuple[int,int,int] = (0,68,119)
 
 DEFAULT_SIZE:int = 80
 
