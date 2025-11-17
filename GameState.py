@@ -1,7 +1,7 @@
 import GameUtils
 
 class GameState:
-    def __init__(self, nr_points):
+    def __init__(self, nr_points, chery_poz):
         self.game_score: int = 0
         self.powered_up_mode: bool = False
         self.time_until_powered_up_stops: int = 0
@@ -19,6 +19,13 @@ class GameState:
         self.nr_points: int = nr_points
         self.nr_points_remaining:int = nr_points
 
+        self.cherry = False
+        self.cherry_poz = chery_poz
+        self.cherry_eaten = False
+
     def reset_for_new_level(self):
         self.powered_up_mode = False
         self.nr_points_remaining = self.nr_points
+        self.cherry_eaten = False
+        self.cherry = False
+        self.pacman_eaten = False

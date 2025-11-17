@@ -1,3 +1,4 @@
+import GUI_utils
 import Maze
 import pygame
 import GameUtils
@@ -30,7 +31,11 @@ class GameDisplay:
         self.big_point_image = pygame.transform.scale(pygame.image.load("big_point.png"), (self.big_point_size, self.big_point_size))
         self.cherry_image = pygame.transform.scale(pygame.image.load("cherry.png"), (self.cherry_size, self.cherry_size))
 
-        self.game_state = GameState(self.get_nr_points())
+        self.game_state = GameState(self.get_nr_points(), self.get_chery_board_poz())
+
+    def get_chery_board_poz(self) -> tuple[int, int]:
+        swap_chery_poz = (Maze.DEFAULT_CHERY[1], Maze.DEFAULT_CHERY[0])
+        return positon_add_direction_(scale_direction_(swap_chery_poz, self.cell_size), (0, 0))
 
 
     def get_nr_points(self) -> int:
@@ -64,8 +69,19 @@ class GameDisplay:
                 self.gameplay_scared()
                 self.gameplay_points(cell_poz_pacman)
                 self.gameplay_phantom(cell_poz_pacman, cell_poz_pink, cell_poz_red, cell_poz_blue, cell_poz_orange)
+                self.gameplay_chery()
 
+    def gameplay_chery(self):
+        chery_poz = self.game_state.cherry_poz[0] // self.cell_size, self.game_state.cherry_poz[1] // self.cell_size
+        if self.pacman.get_current_cell_poz() == chery_poz:
+            if self.game_state.cherry:
+                self.game_state.cherry = False
+                self.game_state.game_score += GameUtils.POINTS_CHERY
+                self.game_state.cherry_eaten = True
 
+        if self.game_state.nr_points_remaining <= self.game_state.nr_points // 1.1:
+            if not self.game_state.cherry_eaten:
+                self.game_state.cherry = True
     def gameplay_teleport(self):
         cell_poz_pacman = self.pacman.get_current_cell_poz()
         swap_p_1 = Maze.DEFAULT_TELEPORTS[0][1], Maze.DEFAULT_TELEPORTS[0][0]
@@ -156,6 +172,7 @@ class GameDisplay:
         else:
             if self.game_state.powered_up_mode:
                 a.eaten_state = True
+                self.game_state.game_score += GameUtils.POINTS_GHOST_EAT
             else:
                 self.pacman_eat()
 
@@ -198,8 +215,14 @@ class GameDisplay:
         self.pink.draw(self.screen)
         self.orange.draw(self.screen)
 
+        self.draw_chery()
         self.draw_board()
 
+    def draw_chery(self):
+        if self.game_state.cherry:
+            offset: float = (self.cherry_size / 2)
+            draw_poz = self.game_state.cherry_poz
+            self.screen.blit(self.cherry_image, (draw_poz[0], draw_poz[1]))
 
     def draw_board(self):
         for row in range(len(self.board)):
