@@ -2,11 +2,14 @@ import sys
 import time
 
 import pygame
+from matplotlib.pyplot import switch_backend
 
 import GUI_utils
 import GameUtils
 from Button import Button
 from GameDisplay import GameDisplay
+
+import algs
 
 def make_button_simpler(screen, position:tuple[int,int], text:str) -> Button:
     return Button(screen, position, text, GUI_utils.COLOR_DEFAULT_BUTTON, GUI_utils.COLOR_DEFAULT_TEXT, GUI_utils.DEFAULT_SIZE)
@@ -96,18 +99,53 @@ class GUI:
         self.button_manual.draw()
         self.button_auto.draw()
 
+    def handle_pacman_move(self):
+        if self.gui_utils.mode == GUI_utils.MODE_MANUAL:
+            self.handle_events()
+        else:
+            path, d = algs.move(GameUtils.ACTOR_PACMAN, self.gui_utils.alg_pacman, self.gui_utils.alg_ghost, self.game)
+            self.gui_utils.direction_pacman = d
+            self.visualize_path(path)
+
+    def visualize_path(self, path: list[tuple[int,int]]):
+        pass
+
+    def handle_ghost_move_id(self, g_id:int):
+        p,d = algs.move(g_id, self.gui_utils.alg_pacman, self.gui_utils.alg_ghost, self.game)
+        match g_id:
+            case GameUtils.ACTOR_RED:
+                self.gui_utils.direction_red = d
+            case GameUtils.ACTOR_BLUE:
+                self.gui_utils.direction_blue = d
+            case GameUtils.ACTOR_ORANGE:
+                self.gui_utils.direction_orange = d
+            case GameUtils.ACTOR_PINK:
+                self.gui_utils.direction_pink = d
+            case _:
+                raise NotImplementedError
+
+    def handle_ghost_move(self):
+        self.handle_ghost_move_id(GameUtils.ACTOR_RED)
+        self.handle_ghost_move_id(GameUtils.ACTOR_ORANGE)
+        self.handle_ghost_move_id(GameUtils.ACTOR_BLUE)
+        self.handle_ghost_move_id(GameUtils.ACTOR_PINK)
+
     def main_loop(self):
         if self.gui_utils.play:
             p = self.game.pacman.get_cell_poz(self.game.pacman.poz)
             if self.game.board[p[1]][p[0]] == GameUtils.CELL_WALL:
                 print("W")
-            self.handle_events()
+
+            self.handle_pacman_move()
+            self.handle_ghost_move()
 
             if not self.game.game_state.game_temp_pause:
-                self.game.change_direction_a_type(GameUtils.ACTOR_PACMAN, self.gui_utils.direction)
+                self.game.change_direction_a_type(GameUtils.ACTOR_PACMAN, self.gui_utils.direction_pacman)
                 self.game.move_a_type_default(GameUtils.ACTOR_PACMAN)
-            self.game.draw()
 
+                self.game.red.change_direction_and_position_unchecked(self.gui_utils.direction_red)
+
+            self.game.draw()
 
     def handle_events(self):
         #print("handle_events")
@@ -119,17 +157,18 @@ class GUI:
             # Continuous key press detection
         keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_w]:
+        if keys[pygame.K_w] or keys[pygame.K_UP]:
             #print("W pressed")
-            self.gui_utils.direction = GameUtils.DIRECTION_UP
-        elif keys[pygame.K_a]:
+            self.gui_utils.direction_pacman = GameUtils.DIRECTION_UP
+        elif keys[pygame.K_a] or keys[pygame.K_LEFT]:
             #print("A pressed")
-            self.gui_utils.direction = GameUtils.DIRECTION_LEFT
-        elif keys[pygame.K_s]:
+            self.gui_utils.direction_pacman = GameUtils.DIRECTION_LEFT
+        elif keys[pygame.K_s] or keys[pygame.K_DOWN]:
             #print("S pressed")
-            self.gui_utils.direction = GameUtils.DIRECTION_DOWN
-        elif keys[pygame.K_d]:
+            self.gui_utils.direction_pacman = GameUtils.DIRECTION_DOWN
+        elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             #print("D pressed")
-            self.gui_utils.direction = GameUtils.DIRECTION_RIGHT
+            self.gui_utils.direction_pacman = GameUtils.DIRECTION_RIGHT
 
 GUI = GUI()
+

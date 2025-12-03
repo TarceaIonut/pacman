@@ -101,6 +101,12 @@ class Actor:
     def get_new_poz(self, direction: tuple[int,int]):
         return positon_add_direction_(self.poz, scale_direction_(direction, self.number_of_pixels_per_draw))
 
+    def change_direction_and_position_unchecked(self, direction: tuple[int,int]):
+        p_x = self.poz[1] + direction[0] * self.number_of_pixels_per_draw
+        p_y = self.poz[0] + direction[1] * self.number_of_pixels_per_draw
+        self.poz = p_y, p_x
+        self.direction = direction
+
 
 def get_actor_poz(a: Actor) -> tuple[int,int]:
     return a.get_cell_poz(a.poz)

@@ -86,7 +86,6 @@ class GameDisplay:
         cell_poz_pacman = self.pacman.get_current_cell_poz()
         swap_p_1 = Maze.DEFAULT_TELEPORTS[0][1], Maze.DEFAULT_TELEPORTS[0][0]
         swap_p_2 = Maze.DEFAULT_TELEPORTS[1][1], Maze.DEFAULT_TELEPORTS[1][0]
-        print(cell_poz_pacman)
         if cell_poz_pacman == swap_p_1:
             new_poz_pacman:tuple[int,int] = positon_add_direction_(scale_direction_(swap_p_2, self.cell_size), (-self.cell_size // 2, self.cell_size // 2))
             self.pacman.poz = new_poz_pacman
@@ -386,6 +385,7 @@ class GameDisplay:
                 return self.change_direction_actor(self.orange, direction)
             case _:
                 raise NotImplementedError
+
     def change_direction_actor(self, a:Actor, direction: tuple[int, int]) -> bool:
         new_poz = a.get_new_poz(direction)
         if self.check_new_position(new_poz, direction):

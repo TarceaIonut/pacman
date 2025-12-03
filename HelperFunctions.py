@@ -20,6 +20,7 @@ def direction_to_number(direction:tuple[int,int]) -> int:
         return 2
     if GameUtils.DIRECTION_RIGHT == direction:
         return 3
+    print(direction)
     raise NotImplementedError
 
 def image_black_transparent(path: str, size: float) -> pygame.Surface:

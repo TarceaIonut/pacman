@@ -22,7 +22,13 @@ DEFAULT_SIZE:int = 80
 
 class GUIUtils:
     def __init__(self):
-        self.direction = GameUtils.DIRECTION_UP
+        self.direction_pacman = GameUtils.DIRECTION_UP
+
+        self.direction_red = GameUtils.DIRECTION_UP
+        self.direction_blue = GameUtils.DIRECTION_UP
+        self.direction_orange = GameUtils.DIRECTION_UP
+        self.direction_pink = GameUtils.DIRECTION_UP
+
         self.mode = MODE_MANUAL
         self.alg_pacman = ALGORITHM_PACMAN_REFLEX_AGENT
         self.alg_ghost = ALGORITHM_GHOST_BFS
